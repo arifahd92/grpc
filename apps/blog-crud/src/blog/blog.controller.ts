@@ -34,10 +34,10 @@ export class BlogController {
     metadata: Metadata,
     call: ServerUnaryCall<any, any>,
   ) {
-    console.log('metadata inside controller create blog');
-    console.log({ metadata });
+    // console.log('metadata inside controller create blog');
+    // console.log({ metadata });
     let token: MetadataValue[] | undefined = metadata.get('token');
-    console.log(token[0], 'inside controller');
+    // console.log(token[0], 'inside controller');
     return this.blogService.create(createBlogDto, token[0]);
   }
   @GrpcMethod('BlogsService', 'FindAllBlogs')

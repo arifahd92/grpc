@@ -17,8 +17,9 @@ console.log(__dirname);
     }),
 
     ClientsModule.register([
+      //registers a client module for communication with external services using gRPC or other transports.
       {
-        name: 'AUTH_SERVICE',
+        name: 'AUTH_SERVICE', //This specifies the name of the client service. It's used as an identifier for this client within the application
         transport: Transport.GRPC,
         options: {
           package: 'auth',

@@ -12,9 +12,7 @@ import { auth } from 'apps/auth/src/proto/auth';
 
 @Injectable()
 export class BlogService implements OnModuleInit {
-  //BlogsService
-
-  private authProtoService: auth.AdminService;
+  private authProtoService: auth.AdminService; // admin service is name of auth service inside auth proto, now it has access of all rpc method of auth proto
 
   constructor(
     @Inject('AUTH_SERVICE') private client: ClientGrpc,
@@ -24,29 +22,94 @@ export class BlogService implements OnModuleInit {
 
   onModuleInit() {
     this.authProtoService =
-      this.client.getService<auth.AdminService>('AdminService'); //AdminService is from generated proto file
+      this.client.getService<auth.AdminService>('AdminService');
   }
-  create(createBlogDto: blog.CreateBlogDto, token: any) {
-    console.log({ createBlogDto });
-    return this.commandBus.execute(new CreateBlogCommand(createBlogDto, token));
+  async verification(token: string): Promise<any> {
+    const verificationResult = await this.authProtoService
+      .verify({ token }) // this will go first inside auth controller then will go in service of auth module, thats why token is passed as object
+      .toPromise();
+    return verificationResult;
+  }
+  async create(createBlogDto: blog.CreateBlogDto, token: any) {
+    try {
+      const verificationResult = await this.verification(token);
+
+      if (verificationResult.value && verificationResult.role === 'admin') {
+        console.log(
+          'verification success you can create perform write operation ',
+        );
+        return this.commandBus.execute(
+          new CreateBlogCommand(createBlogDto, token),
+        );
+      } else {
+        console.log('inside else create ');
+        return {
+          message: 'Invalid token or user is not authorized.',
+          error: 'some thing went wrong',
+          blog: [],
+        };
+      }
+    } catch (error) {
+      // throw new Error('Error verifying token: ' + error.message);
+      console.log('insie catch block');
+      return {
+        message: 'Invalid token or user is not authorized.',
+        error: 'some thing went wrong',
+        blog: [],
+      };
+    }
   }
 
-  findAll(token: any) {
-    return this.queryBus.execute(new FindAllQuery(token));
+  async findAll(token: any) {
+    let verificationResult = await this.verification(token);
+    console.log({ verificationResult });
+    if (verificationResult.value)
+      // any one either admin or employee can perform read operation with valid data
+      return this.queryBus.execute(new FindAllQuery(token));
   }
 
-  findOne(id: string, token: any) {
-    return this.queryBus.execute(new FindOneQuery(id, token));
+  async findOne(id: string, token: any) {
+    let verificationResult = await this.verification(token);
+    console.log({ verificationResult });
+    if (verificationResult.value) {
+      return this.queryBus.execute(new FindOneQuery(id, token));
+    } else {
+      return {
+        message: 'Invalid token or user is not authorized.',
+        error: 'some thing went wrong',
+        blog: [],
+      };
+    }
   }
 
-  update(id: string, updateBlogDto: blog.UpdateBlogDto, token: any) {
-    return this.commandBus.execute(
-      new UpdateBlogCommand(id, updateBlogDto, token),
-    );
+  async update(id: string, updateBlogDto: blog.UpdateBlogDto, token: any) {
+    const verificationResult = await this.verification(token);
+
+    if (verificationResult.value && verificationResult.role === 'admin') {
+      return this.commandBus.execute(
+        new UpdateBlogCommand(id, updateBlogDto, token),
+      );
+    } else {
+      return {
+        message: 'Invalid token or user is not authorized.',
+        error: 'some thing went wrong',
+        blog: [],
+      };
+    }
   }
 
-  remove(id: any, token: any) {
+  async remove(id: any, token: any) {
     console.log(`inside remove service`);
-    return this.commandBus.execute(new RemoveBlogCommand(id, token));
+    const verificationResult = await this.verification(token);
+
+    if (verificationResult.value && verificationResult.role === 'admin') {
+      return this.commandBus.execute(new RemoveBlogCommand(id, token));
+    } else {
+      return {
+        message: 'Invalid token or user is not authorized.',
+        error: 'some thing went wrong',
+        blog: [],
+      };
+    }
   }
 }

@@ -18,5 +18,6 @@ async function bootstrap() {
     },
   );
   await app.listen();
+  console.log('blog main listening at port 5060');
 }
 bootstrap();

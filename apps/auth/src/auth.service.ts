@@ -2,9 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { auth } from './proto/auth';
 import { UserDB } from 'db/user/user-array';
-// import { auth } from 'proto/auth';
-// import { JWT_SECRET } from 'apps/secret';
-// import { UserDB } from 'database/database';
 
 @Injectable()
 export class AuthService {
@@ -34,9 +31,10 @@ export class AuthService {
     return { token: `${access_token}` };
   }
 
-  async verify(token): Promise<auth.Status> {
+  async verify(token: any): Promise<auth.Status> {
     try {
-      console.log('THIS IS VERIFY');
+      // console.log('THIS IS VERIFY');
+      console.log('THIS IS token', token);
 
       const payload = await this.jwtService.verifyAsync(token, {
         secret: 'JWT_SECRET',
@@ -50,13 +48,14 @@ export class AuthService {
         payload.password === userFromDb.password &&
         payload.role === userFromDb.role
       ) {
+        console.log('This is verify TRUE');
         return { value: true, role: userFromDb.role };
       } else {
-        return { value: false };
+        return { value: false, role: 'undefined' };
       }
     } catch {
       console.log('SOmething went wrong while veryfing');
-      return { value: false };
+      return { value: false, role: 'undefined' };
     }
   }
 }

@@ -16,6 +16,7 @@ export class AuthController {
 
   @GrpcMethod('AdminService', 'Verify')
   verify(data: auth.Token, metadata: Metadata): Promise<auth.Status> {
+    console.log('your request came hee first********************************');
     return this.authService.verify(data.token);
   }
 }

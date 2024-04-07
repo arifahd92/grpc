@@ -18,5 +18,6 @@ async function bootstrap() {
   );
 
   app.listen();
+  console.log('auth main is listening at port 5555');
 }
 bootstrap();
